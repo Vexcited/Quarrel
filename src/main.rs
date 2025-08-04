@@ -1,56 +1,104 @@
 use gpui::{
-    div, prelude::*, px, rgb, size, App, Application, Bounds, Context, SharedString, Window,
-    WindowBounds, WindowOptions,
+    App, Application, Bounds, Context, IntoElement, Window, WindowBounds, WindowOptions, div,
+    prelude::*, px, rgb, rgba, size,
 };
 
-struct HelloWorld {
-    text: SharedString,
+#[derive(IntoElement)]
+struct ServerSideBar {}
+
+impl ServerSideBar {
+    pub fn new() -> Self {
+        Self {}
+    }
 }
 
-impl Render for HelloWorld {
-    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+impl RenderOnce for ServerSideBar {
+    fn render(self, _: &mut Window, _: &mut App) -> impl IntoElement {
         div()
+            .id("server_side_bar")
+            .overflow_y_scroll()
+            .h_full()
             .flex()
             .flex_col()
-            .gap_3()
-            .bg(rgb(0x505050))
-            .size(px(500.0))
-            .justify_center()
             .items_center()
-            .shadow_lg()
-            .border_1()
-            .border_color(rgb(0x0000ff))
-            .text_xl()
-            .text_color(rgb(0xffffff))
-            .child(format!("Hello, {}!", &self.text))
-            .child(
+            .p_2()
+            .gap_2()
+            .children((0..20).map(|i| {
                 div()
+                    .flex_shrink_0()
+                    .size_10()
+                    .bg(gpui::white())
+                    .rounded_md()
                     .flex()
-                    .gap_2()
-                    .child(div().size_8().bg(gpui::red()))
-                    .child(div().size_8().bg(gpui::green()))
-                    .child(div().size_8().bg(gpui::blue()))
-                    .child(div().size_8().bg(gpui::yellow()))
-                    .child(div().size_8().bg(gpui::black()))
-                    .child(div().size_8().bg(gpui::white())),
-            )
+                    .items_center()
+                    .justify_center()
+                    .child(format!("S{i}"))
+            }))
+    }
+}
+
+#[derive(IntoElement)]
+struct PrivateChannelsBar {}
+
+impl RenderOnce for PrivateChannelsBar {
+    fn render(self, _: &mut Window, _: &mut App) -> impl IntoElement {
+        div()
+            .id("private_channels_side_bar")
+            .overflow_y_scroll()
+            .w(px(288.))
+            .h_full()
+            .child(Self::render_tab("Friends"))
+            .child(Self::render_tab("Nitro"))
+            .child(Self::render_tab("Shop"))
+    }
+}
+
+impl PrivateChannelsBar {
+    pub fn new() -> Self {
+        Self {}
+    }
+
+    fn render_tab(name: &'static str) -> impl IntoElement {
+        div()
+            .text_color(rgb(0x94959c))
+            .rounded_lg()
+            .w_full()
+            .px_2()
+            .py_1()
+            .hover(|s| {
+                s.text_color(rgb(0xfbfbfb))
+                    .bg(rgba(0x97979f14))
+                    .cursor_pointer()
+            })
+            .child(name)
+    }
+}
+
+struct AppLayout {}
+
+impl Render for AppLayout {
+    fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+        div()
+            .bg(rgb(0x121214))
+            .size_full()
+            .flex()
+            .child(ServerSideBar::new())
+            .child(PrivateChannelsBar::new())
     }
 }
 
 fn main() {
     Application::new().run(|cx: &mut App| {
-        let bounds = Bounds::centered(None, size(px(500.), px(500.0)), cx);
+        let bounds = Bounds::centered(None, size(px(900.), px(600.)), cx);
         cx.open_window(
             WindowOptions {
                 window_bounds: Some(WindowBounds::Windowed(bounds)),
                 ..Default::default()
             },
-            |_, cx| {
-                cx.new(|_| HelloWorld {
-                    text: "World".into(),
-                })
-            },
+            |_, cx| cx.new(|_| AppLayout {}),
         )
         .unwrap();
+
+        cx.activate(true);
     });
 }
