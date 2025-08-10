@@ -9,6 +9,7 @@ use crate::{
   stores::{AppState, auth::AuthStore},
 };
 
+mod api;
 mod components;
 mod layouts;
 mod stores;
